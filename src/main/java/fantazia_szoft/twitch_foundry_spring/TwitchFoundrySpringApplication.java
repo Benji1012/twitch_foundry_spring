@@ -19,7 +19,7 @@ public class TwitchFoundrySpringApplication {
 	            @Override
 	            public void addCorsMappings(CorsRegistry registry) {
 	                registry.addMapping("/**")
-	                        .allowedOrigins("http://127.0.0.1:8082")
+	                        .allowedOrigins("http://127.0.0.1:8082", "https://zed4vietrc5tn65xtn8eg5y01hr14k.ext-twitch.tv")
 	                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 	                        .allowedHeaders("*")
 	                        .exposedHeaders("*")

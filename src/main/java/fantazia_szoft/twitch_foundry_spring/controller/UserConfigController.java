@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://127.0.0.1:8082")
+@CrossOrigin(origins = {"http://127.0.0.1:8082", "https://zed4vietrc5tn65xtn8eg5y01hr14k.ext-twitch.tv"})
 public class UserConfigController {
 
     private final UserConfigRepository repository;
