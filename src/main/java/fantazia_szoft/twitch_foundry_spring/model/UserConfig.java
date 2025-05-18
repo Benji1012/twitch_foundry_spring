@@ -1,12 +1,8 @@
 package fantazia_szoft.twitch_foundry_spring.model;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 @Entity
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Table
 public class UserConfig {
     @Id
@@ -85,14 +81,20 @@ public class UserConfig {
 	public void setPlayer6Name(String player6Name) {
 		this.player6Name = player6Name;
 	}
-	public UserConfig() {
-		super();
-	}
-	public String gettwitchChannelId() {
+	
+	public String getTwitchChannelId() {
 		return twitchChannelId;
 	}
-	public void settwitchChannelId(String twitchChannelId) {
+	public void setTwitchChannelId(String twitchChannelId) {
 		this.twitchChannelId = twitchChannelId;
+	}
+	
+	@Override
+	public String toString() {
+		return "UserConfig [id=" + id + ", twitchChannelId=" + twitchChannelId + ", twitchuserId=" + twitchuserId
+				+ ", twitchToken=" + twitchToken + ", foundryApiKey=" + foundryApiKey + ", player1Name=" + player1Name
+				+ ", player2Name=" + player2Name + ", player3Name=" + player3Name + ", player4Name=" + player4Name
+				+ ", player5Name=" + player5Name + ", player6Name=" + player6Name + "]";
 	}
 	public UserConfig(Long id, String twitchChannelId, String twitchuserId, String twitchToken, String foundryApiKey,
 			String player1Name, String player2Name, String player3Name, String player4Name, String player5Name,
@@ -110,12 +112,9 @@ public class UserConfig {
 		this.player5Name = player5Name;
 		this.player6Name = player6Name;
 	}
-	@Override
-	public String toString() {
-		return "UserConfig [id=" + id + ", twitchChannelId=" + twitchChannelId + ", twitchuserId=" + twitchuserId
-				+ ", twitchToken=" + twitchToken + ", foundryApiKey=" + foundryApiKey + ", player1Name=" + player1Name
-				+ ", player2Name=" + player2Name + ", player3Name=" + player3Name + ", player4Name=" + player4Name
-				+ ", player5Name=" + player5Name + ", player6Name=" + player6Name + "]";
+	public UserConfig() {
+		super();
+		// TODO Auto-generated constructor stub
 	}
 }
 

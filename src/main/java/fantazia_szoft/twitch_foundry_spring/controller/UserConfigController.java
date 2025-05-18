@@ -44,7 +44,7 @@ public class UserConfigController {
         UserConfig config = new UserConfig();
         //config.setTwitchToken(token);
         config.setTwitchuserId(twitchUserId);
-        config.settwitchChannelId(twitchChanel);
+        config.setTwitchChannelId(twitchChanel);
         config.setFoundryApiKey(dto.getFoundryApiKey());
         config.setPlayer1Name(dto.getPlayer1Name());
         config.setPlayer2Name(dto.getPlayer2Name());
