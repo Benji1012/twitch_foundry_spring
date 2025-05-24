@@ -1,5 +1,8 @@
 package fantazia_szoft.twitch_foundry_spring.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONObject;
 
 import fantazia_szoft.twitch_foundry_spring.controller.FoundryApiClientController;
@@ -19,6 +22,8 @@ public class Player {
 	private Integer wis = 0;
 	private Integer cha = 0;
 	private final FoundryApiClientController foundryClient;
+	private Map<String, Skill> skills = new HashMap<>();
+
 	
 	public Player( String name,  FoundryApiClientController foundryClient) {
 		super();
@@ -46,8 +51,8 @@ public class Player {
 				JSONObject abilities = system.getJSONObject("abilities");
 		
 				// Now you can extract values
-				this.currentHp = attributes.getJSONObject("hp").getInt("value")+ attributes.getJSONObject("hp").getInt("temp");
-				this.maxHp = attributes.getJSONObject("hp").getInt("max") + attributes.getJSONObject("hp").getInt("tempmax");
+				this.currentHp = attributes.getJSONObject("hp").getInt("value") + (attributes.getJSONObject("hp").getString("temp").equals("temp")?attributes.getJSONObject("hp").getInt("temp"):0);
+				this.maxHp = attributes.getJSONObject("hp").getInt("max") + (attributes.getJSONObject("hp").getString("tempmax").equals("tempmax")?attributes.getJSONObject("hp").getInt("tempmax"):0);
 		//		this.ac = attributes.getJSONObject("ac").optInt("flat", 0);  // fallback if null
 		
 				this.str = abilities.getJSONObject("str").getInt("value");
@@ -57,6 +62,16 @@ public class Player {
 				this.wis = abilities.getJSONObject("wis").getInt("value");
 				this.cha = abilities.getJSONObject("cha").getInt("value");
 				this.ac = foundryClient.getAc(this.uuid);
+				
+				JSONObject skillsJson = system.getJSONObject("skills");
+
+				for (String skillKey : skillsJson.keySet()) {
+				    JSONObject skillObj = skillsJson.getJSONObject(skillKey);
+				    String ability = skillObj.getString("ability");
+				    int value = skillObj.getInt("value");
+				    skills.put(skillKey, new Skill(ability, value));
+				}
+
 			}
 		} catch (Exception e) {
 		    System.err.println("Failed to load player stats: " + e.getMessage());
@@ -78,6 +93,19 @@ public class Player {
 	    		uuid = foundryClient.getPlayerIdByName(name);
 	    	}
 	    }
+	 
+	 public String printSkills() {
+		    StringBuilder sb = new StringBuilder();
+		    for (Map.Entry<String, Skill> entry : skills.entrySet()) {
+		        sb.append(entry.getKey().toUpperCase())
+		          .append(" (")
+		          .append(entry.getValue().getAbility().toUpperCase())
+		          .append("): ")
+		          .append(entry.getValue().getValue())
+		          .append("\n");
+		    }
+		    return sb.toString();
+		}
 
 	
 	public String getUuid() {
@@ -148,13 +176,43 @@ public class Player {
 	}
 	@Override
 	public String toString() {
-		return name + " AC: " + ac + " HP: "+ currentHp + " / " + maxHp + " STR: "+ str + " DEX: " + dex + " CON: " + con + " INT: " + intel + " WIS: " + wis + " CHA: " + cha ;
+	    return name + " AC: " + ac + " HP: " + currentHp + " / " + maxHp
+	        + " STR: " + str + " DEX: " + dex + " CON: " + con
+	        + " INT: " + intel + " WIS: " + wis + " CHA: " + cha
+	        + "\nSkills:\n" + printSkills();
 	}
 
 	public FoundryApiClientController getFoundryClient() {
 		return foundryClient;
 	}
 	
+	public class Skill {
+	    private String ability;
+	    private int value;
+
+	    public Skill(String ability, int value) {
+	        this.ability = ability;
+	        this.value = value;
+	    }
+
+	    public String getAbility() {
+	        return ability;
+	    }
+
+	    public int getValue() {
+	        return value;
+	    }
+
+	    @Override
+	    public String toString() {
+	        return ability.toUpperCase() + ": " + value;
+	    }
+	}
+
+	public Map<String, Skill> getSkills() {
+	    return skills;
+	}
+
 	
 	
 }

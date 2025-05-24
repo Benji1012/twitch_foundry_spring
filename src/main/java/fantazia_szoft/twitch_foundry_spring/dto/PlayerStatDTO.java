@@ -1,6 +1,9 @@
 package fantazia_szoft.twitch_foundry_spring.dto;
 
+import java.util.Map;
+
 import fantazia_szoft.twitch_foundry_spring.model.Player;
+import fantazia_szoft.twitch_foundry_spring.model.Player.Skill;
 
 public class PlayerStatDTO {
     private String name;
@@ -13,6 +16,7 @@ public class PlayerStatDTO {
     private int intel;
     private int wis;
     private int cha;
+    private Map<String, Skill> skills;
 
     public PlayerStatDTO(Player player) {
         this.name = player.getName();
@@ -25,6 +29,7 @@ public class PlayerStatDTO {
         this.intel = player.getIntel();
         this.wis = player.getWis();
         this.cha = player.getCha();
+        this.skills = player.getSkills();
     }
 
 	public String getName() {
