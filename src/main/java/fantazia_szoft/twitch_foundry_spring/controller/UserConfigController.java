@@ -122,6 +122,8 @@ public class UserConfigController {
     @PostMapping("/roll")
     public ResponseEntity<?> rollDice( @RequestHeader("Authorization") String authHeader,  @RequestBody RollDTO dto) {
         try {
+        	System.out.println("/roll is called. rolldto: "+dto.toString());
+        	System.out.println("/authHeader: "+authHeader.toString());
         	 String token = authHeader.replace("Bearer ", "");
              // Extract channel from JWT token
         	 String twitchChannel = twitchService.getTwitchChannelFromToken(token);
@@ -137,14 +139,14 @@ public class UserConfigController {
         	
                  JSONObject payload = new JSONObject();
                  payload.put("formula", dto.getName());
-                 payload.put("flavor", dto.getName());
+                 payload.put("flavor", "Twitch viewer");
                  payload.put("target", "");
                  payload.put("speaker", "");
                  payload.put("itemUuid", "");
                  payload.put("createChatMessage", true);
                  payload.put("whisper", new org.json.JSONArray());
                  
-//                System.out.println("json: "+payload);
+               System.out.println("json: "+payload);
 
                 HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://foundryvtt-rest-api-relay.fly.dev" + "/roll?clientId=" + client_id))
@@ -154,7 +156,7 @@ public class UserConfigController {
                     .build();
 
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-//                System.out.println("Dice roll result: " + response.body());
+                System.out.println("Dice roll result: " + response.body());
            
 
                 return ResponseEntity.ok("Rolled the dice");
