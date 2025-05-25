@@ -122,8 +122,7 @@ public class UserConfigController {
     @PostMapping("/roll")
     public ResponseEntity<?> rollDice( @RequestHeader("Authorization") String authHeader,  @RequestBody RollDTO dto) {
         try {
-        	System.out.println("/roll is called. rolldto: "+dto.toString());
-        	System.out.println("/authHeader: "+authHeader.toString());
+        	System.out.println("/roll is called. rolldto: "+dto.getFormula().toString());
         	 String token = authHeader.replace("Bearer ", "");
              // Extract channel from JWT token
         	 String twitchChannel = twitchService.getTwitchChannelFromToken(token);
@@ -138,7 +137,7 @@ public class UserConfigController {
              UserConfig config = configOpt.get();
         	
                  JSONObject payload = new JSONObject();
-                 payload.put("formula", dto.getName());
+                 payload.put("formula", dto.getFormula());
                  payload.put("flavor", "Twitch viewer");
                  payload.put("target", "");
                  payload.put("speaker", "");
