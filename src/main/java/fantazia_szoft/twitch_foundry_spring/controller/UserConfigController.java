@@ -1,19 +1,32 @@
 package fantazia_szoft.twitch_foundry_spring.controller;
 
+import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import fantazia_szoft.twitch_foundry_spring.dto.PlayerStatDTO;
+import fantazia_szoft.twitch_foundry_spring.dto.RollDTO;
 import fantazia_szoft.twitch_foundry_spring.dto.UserConfigDTO;
 import fantazia_szoft.twitch_foundry_spring.model.Player;
 import fantazia_szoft.twitch_foundry_spring.model.UserConfig;
 import fantazia_szoft.twitch_foundry_spring.repository.UserConfigRepository;
 import fantazia_szoft.twitch_foundry_spring.service.TwitchService;
 
+import java.io.UnsupportedEncodingException;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api")
@@ -23,6 +36,8 @@ public class UserConfigController {
     private final UserConfigRepository repository;
    
     private final TwitchService twitchService;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private String client_id = ""; 
     
     public UserConfigController(UserConfigRepository repository,TwitchService twitchService) {
         this.twitchService = twitchService;
@@ -91,6 +106,7 @@ public class UserConfigController {
                     if (name != null && !name.isBlank()) {
                         Player player = new Player(name, foundryClient);
                         playerStats.add(new PlayerStatDTO(player));
+                        setClient_id(player.getClient_id());
                     }
                 }
 
@@ -102,6 +118,63 @@ public class UserConfigController {
                                      .body("Error fetching player stats: " + e.getMessage());
             }
     }
+    
+    @PostMapping("/roll")
+    public ResponseEntity<?> rollDice( @RequestHeader("Authorization") String authHeader,  @RequestBody RollDTO dto) {
+        try {
+        	 String token = authHeader.replace("Bearer ", "");
+             // Extract channel from JWT token
+        	 String twitchChannel = twitchService.getTwitchChannelFromToken(token);
+
+             // Find config for that channel
+             Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
+             if (configOpt.isEmpty()) {
+                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                      .body("No config found for this Twitch channel.");
+             }
+             
+             UserConfig config = configOpt.get();
+        	
+                 JSONObject payload = new JSONObject();
+                 payload.put("formula", dto.getName());
+                 payload.put("flavor", dto.getName());
+                 payload.put("target", "");
+                 payload.put("speaker", "");
+                 payload.put("itemUuid", "");
+                 payload.put("createChatMessage", true);
+                 payload.put("whisper", new org.json.JSONArray());
+                 
+//                System.out.println("json: "+payload);
+
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://foundryvtt-rest-api-relay.fly.dev" + "/roll?clientId=" + client_id))
+                    .header("x-api-key", config.getFoundryApiKey())
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+                    .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+//                System.out.println("Dice roll result: " + response.body());
+           
+
+                return ResponseEntity.ok("Rolled the dice");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                     .body("Error fetching player stats: " + e.getMessage());
+            }
+    }
+
+	public String getClient_id() {
+		return client_id;
+	}
+
+	public void setClient_id(String client_id) {
+		this.client_id = client_id;
+	}
+
+	
 
     
 }

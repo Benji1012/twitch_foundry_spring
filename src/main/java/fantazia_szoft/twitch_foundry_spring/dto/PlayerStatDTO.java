@@ -16,7 +16,6 @@ public class PlayerStatDTO {
     private int intel;
     private int wis;
     private int cha;
-    private Map<String, Skill> skills;
 
     public PlayerStatDTO(Player player) {
         this.name = player.getName();
@@ -29,7 +28,6 @@ public class PlayerStatDTO {
         this.intel = player.getIntel();
         this.wis = player.getWis();
         this.cha = player.getCha();
-        this.skills = player.getSkills();
     }
 
 	public String getName() {

@@ -10,6 +10,7 @@ import fantazia_szoft.twitch_foundry_spring.controller.FoundryApiClientControlle
 
 public class Player {
 
+	private String client_id = "";
 	private String uuid = "";
 	private String name = "";
 	private Integer maxHp = 0;
@@ -22,7 +23,6 @@ public class Player {
 	private Integer wis = 0;
 	private Integer cha = 0;
 	private final FoundryApiClientController foundryClient;
-	private Map<String, Skill> skills = new HashMap<>();
 
 	
 	public Player( String name,  FoundryApiClientController foundryClient) {
@@ -46,7 +46,7 @@ public class Player {
 				JSONObject json = foundryClient.getPlayerStastByUUid(uuid);
 				JSONObject data = json.getJSONObject("data");
 				JSONObject system = data.getJSONObject("system");
-		
+				setClient_id(foundryClient.getClienId());
 				JSONObject attributes = system.getJSONObject("attributes");
 				JSONObject abilities = system.getJSONObject("abilities");
 		
@@ -64,15 +64,6 @@ public class Player {
 				this.cha = abilities.getJSONObject("cha").getInt("value");
 				this.ac = foundryClient.getAc(this.uuid);
 				
-				JSONObject skillsJson = system.getJSONObject("skills");
-
-				for (String skillKey : skillsJson.keySet()) {
-				    JSONObject skillObj = skillsJson.getJSONObject(skillKey);
-				    String ability = skillObj.getString("ability");
-				    int value = skillObj.getInt("value");
-				    skills.put(skillKey, new Skill(ability, value));
-				}
-
 			}
 		} catch (Exception e) {
 		    System.err.println("Failed to load player stats: " + e.getMessage());
@@ -95,20 +86,6 @@ public class Player {
 	    	}
 	    }
 	 
-	 public String printSkills() {
-		    StringBuilder sb = new StringBuilder();
-		    for (Map.Entry<String, Skill> entry : skills.entrySet()) {
-		        sb.append(entry.getKey().toUpperCase())
-		          .append(" (")
-		          .append(entry.getValue().getAbility().toUpperCase())
-		          .append("): ")
-		          .append(entry.getValue().getValue())
-		          .append("\n");
-		    }
-		    return sb.toString();
-		}
-
-	
 	public String getUuid() {
 		return uuid;
 	}
@@ -180,7 +157,7 @@ public class Player {
 	    return name + " AC: " + ac + " HP: " + currentHp + " / " + maxHp
 	        + " STR: " + str + " DEX: " + dex + " CON: " + con
 	        + " INT: " + intel + " WIS: " + wis + " CHA: " + cha
-	        + "\nSkills:\n" + printSkills();
+	       ;
 	}
 
 	public FoundryApiClientController getFoundryClient() {
@@ -210,10 +187,13 @@ public class Player {
 	    }
 	}
 
-	public Map<String, Skill> getSkills() {
-	    return skills;
+	public String getClient_id() {
+		return client_id;
 	}
 
-	
+	public void setClient_id(String client_id) {
+		this.client_id = client_id;
+	}
+
 	
 }
