@@ -51,8 +51,9 @@ public class Player {
 				JSONObject abilities = system.getJSONObject("abilities");
 		
 				// Now you can extract values
-				this.currentHp = attributes.getJSONObject("hp").getInt("value") + (attributes.getJSONObject("hp").getString("temp").equals("temp")?attributes.getJSONObject("hp").getInt("temp"):0);
-				this.maxHp = attributes.getJSONObject("hp").getInt("max") + (attributes.getJSONObject("hp").getString("tempmax").equals("tempmax")?attributes.getJSONObject("hp").getInt("tempmax"):0);
+				this.currentHp = attributes.getJSONObject("hp").getInt("value") + attributes.getJSONObject("hp").getInt("temp");
+//				this.maxHp = attributes.getJSONObject("hp").getInt("max") + (attributes.getJSONObject("hp").getString("tempmax").equals("tempmax")?attributes.getJSONObject("hp").getInt("tempmax"):0);
+				this.maxHp = attributes.getJSONObject("hp").getInt("max") + attributes.getJSONObject("hp").getInt("tempmax");
 		//		this.ac = attributes.getJSONObject("ac").optInt("flat", 0);  // fallback if null
 		
 				this.str = abilities.getJSONObject("str").getInt("value");
