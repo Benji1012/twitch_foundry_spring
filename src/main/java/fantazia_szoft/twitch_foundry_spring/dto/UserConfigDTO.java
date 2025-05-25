@@ -1,5 +1,7 @@
 package fantazia_szoft.twitch_foundry_spring.dto;
 
+import java.util.Map;
+
 import lombok.Data;
 
 @Data
@@ -14,7 +16,6 @@ public class UserConfigDTO {
     private String player4Name;
     private String player5Name;
     private String player6Name;
-    
     
 //	public String getTwitchUsername() {
 //		return twitchUsername;
@@ -68,6 +69,6 @@ public class UserConfigDTO {
 	public String toString() {
 		return "UserConfigDTO [foundryApiKey=" + foundryApiKey + ", player1Name=" + player1Name + ", player2Name="
 				+ player2Name + ", player3Name=" + player3Name + ", player4Name=" + player4Name + ", player5Name="
-				+ player5Name + ", player6Name=" + player6Name + "]";
+				+ player5Name + ", player6Name=" + player6Name +"]";
 	}
 }

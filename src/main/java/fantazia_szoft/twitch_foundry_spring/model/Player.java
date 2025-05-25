@@ -1,8 +1,11 @@
 package fantazia_szoft.twitch_foundry_spring.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import fantazia_szoft.twitch_foundry_spring.controller.FoundryApiClientController;
@@ -13,6 +16,8 @@ public class Player {
 	private String client_id = "";
 	private String uuid = "";
 	private String name = "";
+	private String race = "";
+	private String class_ = "";
 	private Integer maxHp = 0;
 	private Integer currentHp = 0;
 	private Integer ac = 0;
@@ -22,7 +27,29 @@ public class Player {
 	private Integer intel = 0;
 	private Integer wis = 0;
 	private Integer cha = 0;
+	private Integer level_ = 0;
+	private Integer acrobatics = 0;
+	private Integer animalHandling = 0;
+	private Integer arcana = 0;
+	private Integer athletics = 0;
+	private Integer deception = 0;
+	private Integer history = 0;
+	private Integer insight = 0;
+	private Integer intimidation = 0;
+	private Integer investigation = 0;
+	private Integer medicine = 0;
+	private Integer nature = 0;
+	private Integer perception = 0;
+	private Integer performance = 0;
+	private Integer persuasion = 0;
+	private Integer religion = 0;
+	private Integer sleightOfHand = 0;
+	private Integer stealth = 0;
+	private Integer survival = 0;
+	List<String> equippedItems = new ArrayList<>();
+
 	private final FoundryApiClientController foundryClient;
+	
 
 	
 	public Player( String name,  FoundryApiClientController foundryClient) {
@@ -66,6 +93,108 @@ public class Player {
 				this.wis = abilities.getJSONObject("wis").getInt("value");
 				this.cha = abilities.getJSONObject("cha").getInt("value");
 				this.ac = foundryClient.getAc(this.uuid);
+				//System.out.println(system.toString(2));
+				if (system.has("skills") && !system.isNull("skills") && system.has("details") && !system.isNull("details")) {
+				    JSONObject skillsJson = system.getJSONObject("skills");
+				    int xp = 0;
+				    if(system.getJSONObject("details").has("xp")) {
+				    	 xp = system.getJSONObject("details").getJSONObject("xp").getInt("value");
+				    }
+					level_ = calculateLevel(xp);
+					int proficiency = 2 + (level_ - 1) / 4;
+					Map<String, Integer> abilityMap = Map.of(
+						    "str", this.str,
+						    "dex", this.dex,
+						    "con", this.con,
+						    "int", this.intel,
+						    "wis", this.wis,
+						    "cha", this.cha
+						);
+
+						for (String skillName : skillsJson.keySet()) {
+						    JSONObject skillObj = skillsJson.getJSONObject(skillName);
+						    String ability = skillObj.getString("ability");
+						    double profLevel = skillObj.getDouble("value");  // 0, 0.5, 1.0, or 2.0
+						    int baseMod = (int) Math.floor((abilityMap.getOrDefault(ability, 10) - 10) / 2.0);
+						    int skillValue = (int) Math.floor(baseMod + (profLevel * proficiency));
+
+						    switch (skillName) {
+						        case "acr": acrobatics = skillValue; break;
+						        case "ani": animalHandling = skillValue; break;
+						        case "arc": arcana = skillValue; break;
+						        case "ath": athletics = skillValue; break;
+						        case "dec": deception = skillValue; break;
+						        case "his": history = skillValue; break;
+						        case "ins": insight = skillValue; break;
+						        case "itm": intimidation = skillValue; break;
+						        case "inv": investigation = skillValue; break;
+						        case "med": medicine = skillValue; break;
+						        case "nat": nature = skillValue; break;
+						        case "prc": perception = skillValue; break;
+						        case "prf": performance = skillValue; break;
+						        case "per": persuasion = skillValue; break;
+						        case "rel": religion = skillValue; break;
+						        case "slt": sleightOfHand = skillValue; break;
+						        case "ste": stealth = skillValue; break;
+						        case "sur": survival = skillValue; break;
+						    }
+						}
+						String race_id = "";
+						String class_id = "";
+						if(system.getJSONObject("details").has("race") && !system.getJSONObject("details").isNull("race")) {
+							 race_id = system.getJSONObject("details").getString("race");
+						}
+						if(system.getJSONObject("details").has("originalClass") && !system.getJSONObject("details").isNull("originalClass")) {
+							 class_id = system.getJSONObject("details").getString("originalClass");
+						}
+						
+						
+						if(data.has("items") &&  !data.isNull("items")) {
+							JSONArray items = data.getJSONArray("items");
+
+							
+							JSONObject raceItem = null;
+							JSONObject classItem = null;
+
+							for (int i = 0; i < items.length(); i++) {
+							    JSONObject item = items.getJSONObject(i);
+							    String itemId = item.getString("_id");
+
+							    // Equipped items
+							    if (item.has("system") && item.getJSONObject("system").optBoolean("equipped", false)) {
+							        String itemName = item.optString("name", "Unnamed Item");
+							        equippedItems.add(itemName);
+							    }
+
+							    // Match race or class
+							    if (!race_id.equals("") && itemId.equals(race_id)) {
+							        raceItem = item;
+							    } else if (!class_id.equals("") && itemId.equals(class_id)) {
+							        classItem = item;
+							    }
+							}
+
+							// Output equipped items
+							System.out.println("Equipped Items:");
+							for (String item : equippedItems) {
+							    System.out.println("- " + item);
+							}
+
+							// Optional: Show matched race/class item names
+							if (raceItem != null) {
+							    race = raceItem.optString("name");
+							}
+							if (classItem != null) {
+							    class_ = classItem.optString("name");
+							}
+						}
+
+				} else {
+				    System.out.println("No 'skills' field found in system JSON.");
+				}
+				
+				
+				
 				
 			}
 		} catch (Exception e) {
@@ -155,40 +284,12 @@ public class Player {
 	public void setCha(Integer cha) {
 		this.cha = cha;
 	}
-	@Override
-	public String toString() {
-	    return name + " AC: " + ac + " HP: " + currentHp + " / " + maxHp
-	        + " STR: " + str + " DEX: " + dex + " CON: " + con
-	        + " INT: " + intel + " WIS: " + wis + " CHA: " + cha
-	       ;
-	}
+	
 
 	public FoundryApiClientController getFoundryClient() {
 		return foundryClient;
 	}
 	
-	public class Skill {
-	    private String ability;
-	    private int value;
-
-	    public Skill(String ability, int value) {
-	        this.ability = ability;
-	        this.value = value;
-	    }
-
-	    public String getAbility() {
-	        return ability;
-	    }
-
-	    public int getValue() {
-	        return value;
-	    }
-
-	    @Override
-	    public String toString() {
-	        return ability.toUpperCase() + ": " + value;
-	    }
-	}
 
 	public String getClient_id() {
 		return client_id;
@@ -197,6 +298,221 @@ public class Player {
 	public void setClient_id(String client_id) {
 		this.client_id = client_id;
 	}
-
 	
+	public static int calculateLevel(int xp) {
+	    int[] xpThresholds = {
+	        0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000,
+	        64000, 85000, 100000, 120000, 140000, 165000, 195000,
+	        225000, 265000, 305000, 355000
+	    };
+	    for (int i = xpThresholds.length - 1; i >= 0; i--) {
+	        if (xp >= xpThresholds[i]) return i + 1;
+	    }
+	    return 1;
+	}
+
+	public Integer getLevel_() {
+		return level_;
+	}
+
+	public void setLevel_(Integer level_) {
+		this.level_ = level_;
+	}
+
+	public Integer getAcrobatics() {
+		return acrobatics;
+	}
+
+	public void setAcrobatics(Integer acrobatics) {
+		this.acrobatics = acrobatics;
+	}
+
+	public Integer getAnimalHandling() {
+		return animalHandling;
+	}
+
+	public void setAnimalHandling(Integer animalHandling) {
+		this.animalHandling = animalHandling;
+	}
+
+	public Integer getArcana() {
+		return arcana;
+	}
+
+	public void setArcana(Integer arcana) {
+		this.arcana = arcana;
+	}
+
+	public Integer getAthletics() {
+		return athletics;
+	}
+
+	public void setAthletics(Integer athletics) {
+		this.athletics = athletics;
+	}
+
+	public Integer getDeception() {
+		return deception;
+	}
+
+	public void setDeception(Integer deception) {
+		this.deception = deception;
+	}
+
+	public Integer getHistory() {
+		return history;
+	}
+
+	public void setHistory(Integer history) {
+		this.history = history;
+	}
+
+	public Integer getInsight() {
+		return insight;
+	}
+
+	public void setInsight(Integer insight) {
+		this.insight = insight;
+	}
+
+	public Integer getIntimidation() {
+		return intimidation;
+	}
+
+	public void setIntimidation(Integer intimidation) {
+		this.intimidation = intimidation;
+	}
+
+	public Integer getInvestigation() {
+		return investigation;
+	}
+
+	public void setInvestigation(Integer investigation) {
+		this.investigation = investigation;
+	}
+
+	public Integer getMedicine() {
+		return medicine;
+	}
+
+	public void setMedicine(Integer medicine) {
+		this.medicine = medicine;
+	}
+
+	public Integer getNature() {
+		return nature;
+	}
+
+	public void setNature(Integer nature) {
+		this.nature = nature;
+	}
+
+	public Integer getPerception() {
+		return perception;
+	}
+
+	public void setPerception(Integer perception) {
+		this.perception = perception;
+	}
+
+	public Integer getPerformance() {
+		return performance;
+	}
+
+	public void setPerformance(Integer performance) {
+		this.performance = performance;
+	}
+
+	public Integer getPersuasion() {
+		return persuasion;
+	}
+
+	public void setPersuasion(Integer persuasion) {
+		this.persuasion = persuasion;
+	}
+
+	public Integer getReligion() {
+		return religion;
+	}
+
+	public void setReligion(Integer religion) {
+		this.religion = religion;
+	}
+
+	public Integer getSleightOfHand() {
+		return sleightOfHand;
+	}
+
+	public void setSleightOfHand(Integer sleightOfHand) {
+		this.sleightOfHand = sleightOfHand;
+	}
+
+	public Integer getStealth() {
+		return stealth;
+	}
+
+	public void setStealth(Integer stealth) {
+		this.stealth = stealth;
+	}
+
+	public Integer getSurvival() {
+		return survival;
+	}
+
+	public void setSurvival(Integer survival) {
+		this.survival = survival;
+	}
+
+	public String getRace() {
+		return race;
+	}
+
+	public void setRace(String race) {
+		this.race = race;
+	}
+
+	public String getClass_() {
+		return class_;
+	}
+
+	public void setClass_(String class_) {
+		this.class_ = class_;
+	}
+
+	public List<String> getEquippedItems() {
+		return equippedItems;
+	}
+
+	public void setEquippedItems(List<String> equippedItems) {
+		this.equippedItems = equippedItems;
+	}
+
+	@Override
+	public String toString() {
+		return "Player [client_id=" + client_id + ", uuid=" + uuid + ", name=" + name + ", race=" + race + ", class_="
+				+ class_ + ", maxHp=" + maxHp + ", currentHp=" + currentHp + ", ac=" + ac + ", str=" + str + ", dex="
+				+ dex + ", con=" + con + ", intel=" + intel + ", wis=" + wis + ", cha=" + cha + ", level_=" + level_
+				+ ", acrobatics=" + acrobatics + ", animalHandling=" + animalHandling + ", arcana=" + arcana
+				+ ", athletics=" + athletics + ", deception=" + deception + ", history=" + history + ", insight="
+				+ insight + ", intimidation=" + intimidation + ", investigation=" + investigation + ", medicine="
+				+ medicine + ", nature=" + nature + ", perception=" + perception + ", performance=" + performance
+				+ ", persuasion=" + persuasion + ", religion=" + religion + ", sleightOfHand=" + sleightOfHand
+				+ ", stealth=" + stealth + ", survival=" + survival + ", equippedItems=" + equippedItems
+				+ ", foundryClient=" + foundryClient + ", getUuid()=" + getUuid() + ", getName()=" + getName()
+				+ ", getMaxHp()=" + getMaxHp() + ", getCurrentHp()=" + getCurrentHp() + ", getAc()=" + getAc()
+				+ ", getStr()=" + getStr() + ", getDex()=" + getDex() + ", getCon()=" + getCon() + ", getIntel()="
+				+ getIntel() + ", getWis()=" + getWis() + ", getCha()=" + getCha() + ", getFoundryClient()="
+				+ getFoundryClient() + ", getClient_id()=" + getClient_id() + ", getLevel_()=" + getLevel_()
+				+ ", getAcrobatics()=" + getAcrobatics() + ", getAnimalHandling()=" + getAnimalHandling()
+				+ ", getArcana()=" + getArcana() + ", getAthletics()=" + getAthletics() + ", getDeception()="
+				+ getDeception() + ", getHistory()=" + getHistory() + ", getInsight()=" + getInsight()
+				+ ", getIntimidation()=" + getIntimidation() + ", getInvestigation()=" + getInvestigation()
+				+ ", getMedicine()=" + getMedicine() + ", getNature()=" + getNature() + ", getPerception()="
+				+ getPerception() + ", getPerformance()=" + getPerformance() + ", getPersuasion()=" + getPersuasion()
+				+ ", getReligion()=" + getReligion() + ", getSleightOfHand()=" + getSleightOfHand() + ", getStealth()="
+				+ getStealth() + ", getSurvival()=" + getSurvival() + ", getRace()=" + getRace() + ", getClass_()="
+				+ getClass_() + ", getEquippedItems()=" + getEquippedItems() + ", getClass()=" + getClass()
+				+ ", hashCode()=" + hashCode() + ", toString()=" + super.toString() + "]";
+	}
+
 }
