@@ -39,9 +39,9 @@ public class TwitchWebhookController {
                 System.out.println("🔔 Redemption received: " + userName + " in channel " + channelId);
 
                 Redemptions redemption = new Redemptions();
-                redemption.setUser_id(userId);
-                redemption.setUser_name(userName);
-                redemption.setChanel_id(channelId);
+                redemption.setUserId(userId);
+                redemption.setUserName(userName);
+                redemption.setChanelId(channelId);
 
                 redemptionsRepository.save(redemption);
 

@@ -258,7 +258,7 @@ public class UserConfigController {
             }
 
             Redemptions redemption = redemptionOpt.get();
-            String userName = redemption.getUser_name() != null ? redemption.getUser_name() : "Twitch viewer";
+            String userName = redemption.getUserName() != null ? redemption.getUserName() : "Twitch viewer";
 
             // 🧹 2. Delete the used redemption
             redemptionsRepository.deleteById(redemption.getId());

@@ -9,9 +9,9 @@ public class Redemptions {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String user_id;
-    private String chanel_id;
-   private String user_name;
+    private String userId;
+    private String chanelId;
+   private String userName;
    
     
 	public Long getId() {
@@ -25,28 +25,28 @@ public class Redemptions {
 		super();
 		// TODO Auto-generated constructor stub
 	}
-	public String getUser_id() {
-		return user_id;
+	public String getUserId() {
+		return userId;
 	}
-	public void setUser_id(String user_id) {
-		this.user_id = user_id;
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
-	public String getChanel_id() {
-		return chanel_id;
+	public String getChanelId() {
+		return chanelId;
 	}
-	public void setChanel_id(String chanel_id) {
-		this.chanel_id = chanel_id;
+	public void setChanelId(String chanelId) {
+		this.chanelId = chanelId;
 	}
-	public String getUser_name() {
-		return user_name;
+	public String getUserName() {
+		return userName;
 	}
-	public void setUser_name(String user_name) {
-		this.user_name = user_name;
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
 	@Override
 	public String toString() {
-		return "Redemptions [id=" + id + ", user_id=" + user_id + ", chanel_id=" + chanel_id + ", user_name="
-				+ user_name + "]";
+		return "Redemptions [id=" + id + ", userId=" + userId + ", chanelId=" + chanelId + ", userName=" + userName
+				+ "]";
 	}
 	
 }
