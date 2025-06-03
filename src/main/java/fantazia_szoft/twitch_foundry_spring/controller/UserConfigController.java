@@ -5,6 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import fantazia_szoft.twitch_foundry_spring.dto.PlayerStatDTO;
 import fantazia_szoft.twitch_foundry_spring.dto.RollDTO;
 import fantazia_szoft.twitch_foundry_spring.dto.UserConfigDTO;
@@ -66,6 +69,7 @@ public class UserConfigController {
         config.setPlayer4Name(dto.getPlayer4Name());
         config.setPlayer5Name(dto.getPlayer5Name());
         config.setPlayer6Name(dto.getPlayer6Name());
+        config.setTwitchToken(dto.getTwitchToken());
         System.out.println(config.toString());
         return repository.save(config);
     }
@@ -111,8 +115,13 @@ public class UserConfigController {
             .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        
+     // Parse the JSON response
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(response.body());
+        String accessToken = jsonNode.get("access_token").asText();
 
-        return ResponseEntity.ok(response.body());
+        return ResponseEntity.ok("copy this into the Access Token field in the configuration" +accessToken);
     }
     
     @GetMapping("/refresh")
@@ -164,8 +173,8 @@ public class UserConfigController {
     
     @PostMapping("/subscribe")
     public ResponseEntity<String> subscribe(@RequestParam String userId, @RequestParam String accessToken) throws IOException, InterruptedException {
-        String callback = "https://your-ngrok-url.ngrok.io/twitch/webhook";
-        String secret = "mysharedsecret";
+        String callback = "https://grim-garnet-benji1012-c136b1f8.koyeb.app/twitch/webhook";
+        String secret = "eg111oi7qtrwnkbvzxmaizgl9l01fq";
 
         String body = """
             {

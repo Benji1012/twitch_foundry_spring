@@ -16,6 +16,7 @@ public class UserConfigDTO {
     private String player4Name;
     private String player5Name;
     private String player6Name;
+    private String twitchToken;
     
 //	public String getTwitchUsername() {
 //		return twitchUsername;
@@ -65,10 +66,17 @@ public class UserConfigDTO {
 	public void setPlayer6Name(String player6Name) {
 		this.player6Name = player6Name;
 	}
+	
+	public String getTwitchToken() {
+		return twitchToken;
+	}
+	public void setTwitchToken(String twitchToken) {
+		this.twitchToken = twitchToken;
+	}
 	@Override
 	public String toString() {
 		return "UserConfigDTO [foundryApiKey=" + foundryApiKey + ", player1Name=" + player1Name + ", player2Name="
 				+ player2Name + ", player3Name=" + player3Name + ", player4Name=" + player4Name + ", player5Name="
-				+ player5Name + ", player6Name=" + player6Name +"]";
+				+ player5Name + ", player6Name=" + player6Name + ", twitchToken=" + twitchToken + "]";
 	}
 }
