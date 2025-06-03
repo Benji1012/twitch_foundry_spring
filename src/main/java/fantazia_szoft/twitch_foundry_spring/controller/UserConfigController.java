@@ -46,7 +46,7 @@ public class UserConfigController {
     }
     
     @PostMapping("/config")
-    public UserConfig registerConfig( @RequestBody UserConfigDTO dto,
+    public ResponseEntity registerConfig( @RequestBody UserConfigDTO dto,
             @RequestHeader("Authorization") String authHeader) {
 //        // Delete old config if exists
     System.out.println("Érkező adatok: "+ dto.toString());
@@ -71,7 +71,16 @@ public class UserConfigController {
         config.setPlayer6Name(dto.getPlayer6Name());
         config.setTwitchToken(dto.getTwitchToken());
         System.out.println(config.toString());
-        return repository.save(config);
+        repository.save(config);
+        
+        try {
+            subscribe(config.getTwitchuserId(), config.getTwitchToken()); // <-- this line is critical
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to subscribe: " + e.getMessage());
+        }
+
+        return ResponseEntity.ok("Configuration saved and subscribed to Twitch redemptions.");
     }
     
     @GetMapping("/login")
@@ -121,7 +130,7 @@ public class UserConfigController {
         JsonNode jsonNode = objectMapper.readTree(response.body());
         String accessToken = jsonNode.get("access_token").asText();
 
-        return ResponseEntity.ok("copy this into the Access Token field in the configuration" +accessToken);
+        return ResponseEntity.ok("copy this into the Access Token field in the configuration: " +accessToken);
     }
     
     @GetMapping("/refresh")
