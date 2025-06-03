@@ -93,7 +93,7 @@ public class UserConfigController {
         return ResponseEntity.ok(response.body());
     }
     
-    @GetMapping("/auth/callback")
+    @GetMapping("/callback")
     public ResponseEntity<String> getToken(@RequestParam String code) throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newHttpClient();
         String clientId = "d32fh16qw5qfk2giw6if0eg5tal34t";
