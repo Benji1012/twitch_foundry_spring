@@ -9,24 +9,21 @@ import fantazia_szoft.twitch_foundry_spring.dto.PlayerStatDTO;
 import fantazia_szoft.twitch_foundry_spring.dto.RollDTO;
 import fantazia_szoft.twitch_foundry_spring.dto.UserConfigDTO;
 import fantazia_szoft.twitch_foundry_spring.model.Player;
+import fantazia_szoft.twitch_foundry_spring.model.Redemptions;
 import fantazia_szoft.twitch_foundry_spring.model.UserConfig;
+import fantazia_szoft.twitch_foundry_spring.repository.RedemptionsRepository;
 import fantazia_szoft.twitch_foundry_spring.repository.UserConfigRepository;
 import fantazia_szoft.twitch_foundry_spring.service.TwitchService;
+import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles.Lookup;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api")
@@ -34,16 +31,17 @@ import java.util.stream.Stream;
 public class UserConfigController {
 
     private final UserConfigRepository repository;
-   
+    private final RedemptionsRepository redemptionsRepository;
     private final TwitchService twitchService;
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private String client_id = ""; 
     
-    public UserConfigController(UserConfigRepository repository,TwitchService twitchService) {
+    public UserConfigController(UserConfigRepository repository, TwitchService twitchService, RedemptionsRepository redemptionsRepository) {
         this.twitchService = twitchService;
         this.repository = repository;
+        this.redemptionsRepository = redemptionsRepository;
     }
-
+    
     @PostMapping("/config")
     public UserConfig registerConfig( @RequestBody UserConfigDTO dto,
             @RequestHeader("Authorization") String authHeader) {
@@ -70,6 +68,51 @@ public class UserConfigController {
         config.setPlayer6Name(dto.getPlayer6Name());
         System.out.println(config.toString());
         return repository.save(config);
+    }
+    
+    @GetMapping("/login")
+    public void redirectToTwitch(HttpServletResponse response) throws IOException {
+        String clientId = "d32fh16qw5qfk2giw6if0eg5tal34t";
+        String redirectUri = "https://grim-garnet-benji1012-c136b1f8.koyeb.app/api/callback";
+        String scope = "channel:read:redemptions";
+        String url = "https://id.twitch.tv/oauth2/authorize?client_id=" + clientId +
+                     "&redirect_uri=" + redirectUri +
+                     "&response_type=code&scope=" + scope;
+        response.sendRedirect(url);
+    }
+    
+    @GetMapping("/user")
+    public ResponseEntity<String> getUser(@RequestParam String accessToken) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.twitch.tv/helix/users"))
+            .header("Authorization", "Bearer " + accessToken)
+            .header("Client-Id", "d32fh16qw5qfk2giw6if0eg5tal34t")
+            .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        return ResponseEntity.ok(response.body());
+    }
+    
+    @GetMapping("/auth/callback")
+    public ResponseEntity<String> getToken(@RequestParam String code) throws IOException, InterruptedException {
+        HttpClient httpClient = HttpClient.newHttpClient();
+        String clientId = "d32fh16qw5qfk2giw6if0eg5tal34t";
+        String clientSecret = "eg111oi7qtrwnkbvzxmaizgl9l01fq";
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("https://id.twitch.tv/oauth2/token" +
+                    "?client_id=" + clientId +
+                    "&client_secret=" + clientSecret +
+                    "&code=" + code +
+                    "&grant_type=authorization_code" +
+                    "&redirect_uri=https://grim-garnet-benji1012-c136b1f8.koyeb.app/api/callback"))
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        return ResponseEntity.ok(response.body());
     }
     
     @GetMapping("/refresh")
@@ -119,53 +162,150 @@ public class UserConfigController {
             }
     }
     
-    @PostMapping("/roll")
-    public ResponseEntity<?> rollDice( @RequestHeader("Authorization") String authHeader,  @RequestBody RollDTO dto) {
-        try {
-        	System.out.println("/roll is called. rolldto: "+dto.getFormula().toString());
-        	 String token = authHeader.replace("Bearer ", "");
-             // Extract channel from JWT token
-        	 String twitchChannel = twitchService.getTwitchChannelFromToken(token);
+    @PostMapping("/subscribe")
+    public ResponseEntity<String> subscribe(@RequestParam String userId, @RequestParam String accessToken) throws IOException, InterruptedException {
+        String callback = "https://your-ngrok-url.ngrok.io/twitch/webhook";
+        String secret = "mysharedsecret";
 
-             // Find config for that channel
-             Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
-             if (configOpt.isEmpty()) {
-                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                      .body("No config found for this Twitch channel.");
-             }
-             
-             UserConfig config = configOpt.get();
-        	
-                 JSONObject payload = new JSONObject();
-                 payload.put("formula", dto.getFormula());
-                 payload.put("flavor", "Twitch viewer");
-                 payload.put("target", "");
-                 payload.put("speaker", "");
-                 payload.put("itemUuid", "");
-                 payload.put("createChatMessage", true);
-                 payload.put("whisper", new org.json.JSONArray());
-                 
-               System.out.println("json: "+payload);
-
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://foundryvtt-rest-api-relay.fly.dev" + "/roll?clientId=" + client_id))
-                    .header("x-api-key", config.getFoundryApiKey())
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
-                    .build();
-
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-                System.out.println("Dice roll result: " + response.body());
-           
-
-                return ResponseEntity.ok("Rolled the dice");
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                     .body("Error fetching player stats: " + e.getMessage());
+        String body = """
+            {
+              "type": "channel.channel_points_custom_reward_redemption.add",
+              "version": "1",
+              "condition": {
+                "broadcaster_user_id": "%s"
+              },
+              "transport": {
+                "method": "webhook",
+                "callback": "%s",
+                "secret": "%s"
+              }
             }
+            """.formatted(userId, callback, secret);
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.twitch.tv/helix/eventsub/subscriptions"))
+            .header("Client-Id", "d32fh16qw5qfk2giw6if0eg5tal34t")
+            .header("Authorization", "Bearer " + accessToken)
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        return ResponseEntity.ok(response.body());
     }
+
+    
+//    @PostMapping("/roll")
+//    public ResponseEntity<?> rollDice( @RequestHeader("Authorization") String authHeader,  @RequestBody RollDTO dto) {
+//        try {
+//        	System.out.println("/roll is called. rolldto: "+dto.getFormula().toString());
+//        	 String token = authHeader.replace("Bearer ", "");
+//             // Extract channel from JWT token
+//        	 String twitchChannel = twitchService.getTwitchChannelFromToken(token);
+//
+//             // Find config for that channel
+//             Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
+//             if (configOpt.isEmpty()) {
+//                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                                      .body("No config found for this Twitch channel.");
+//             }
+//             
+//             UserConfig config = configOpt.get();
+//        	
+//                 JSONObject payload = new JSONObject();
+//                 payload.put("formula", dto.getFormula());
+//                 payload.put("flavor", "Twitch viewer");
+//                 payload.put("target", "");
+//                 payload.put("speaker", "");
+//                 payload.put("itemUuid", "");
+//                 payload.put("createChatMessage", true);
+//                 payload.put("whisper", new org.json.JSONArray());
+//                 
+//               System.out.println("json: "+payload);
+//
+//                HttpRequest request = HttpRequest.newBuilder()
+//                    .uri(URI.create("https://foundryvtt-rest-api-relay.fly.dev" + "/roll?clientId=" + client_id))
+//                    .header("x-api-key", config.getFoundryApiKey())
+//                    .header("Content-Type", "application/json")
+//                    .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+//                    .build();
+//
+//                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+//                System.out.println("Dice roll result: " + response.body());
+//           
+//
+//                return ResponseEntity.ok("Rolled the dice");
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                                     .body("Error fetching player stats: " + e.getMessage());
+//            }
+//    }
+    
+    @PostMapping("/roll")
+    public ResponseEntity<?> rollDice(@RequestHeader("Authorization") String authHeader, @RequestBody RollDTO dto) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            String twitchUserId = twitchService.getTwitchUserIdFromToken(token);
+            String twitchChannel = twitchService.getTwitchChannelFromToken(token);
+
+            // 🔍 1. Check if redemption exists
+            Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserIdAndChanelId(twitchUserId, twitchChannel);
+            if (redemptionOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                     .body("No redemption found. Please redeem the roll reward first.");
+            }
+
+            Redemptions redemption = redemptionOpt.get();
+            String userName = redemption.getUser_name() != null ? redemption.getUser_name() : "Twitch viewer";
+
+            // 🧹 2. Delete the used redemption
+            redemptionsRepository.deleteById(redemption.getId());
+
+            // 🧠 3. Fetch Foundry config
+            Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
+            if (configOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                     .body("No config found for this Twitch channel.");
+            }
+
+            UserConfig config = configOpt.get();
+
+            // 🧪 4. Build payload
+            JSONObject payload = new JSONObject();
+            payload.put("formula", dto.getFormula());
+            payload.put("flavor", userName);
+            payload.put("target", "");
+            payload.put("speaker", "");
+            payload.put("itemUuid", "");
+            payload.put("createChatMessage", true);
+            payload.put("whisper", new org.json.JSONArray());
+
+            System.out.println("Sending dice roll payload for user: " + userName + " | Formula: " + dto.getFormula());
+
+            // 📡 5. Send the request
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://foundryvtt-rest-api-relay.fly.dev/roll?clientId=" + client_id))
+                .header("x-api-key", config.getFoundryApiKey())
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("Foundry Response: " + response.body());
+
+            return ResponseEntity.ok("Rolled the dice");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body("Error during dice roll: " + e.getMessage());
+        }
+    }
+
+
 
 	public String getClient_id() {
 		return client_id;
@@ -174,9 +314,6 @@ public class UserConfigController {
 	public void setClient_id(String client_id) {
 		this.client_id = client_id;
 	}
-
-	
-
     
 }
 
