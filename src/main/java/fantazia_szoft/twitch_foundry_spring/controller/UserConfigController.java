@@ -184,7 +184,7 @@ public class UserConfigController {
     public ResponseEntity<String> subscribe(@RequestParam String userId, @RequestParam String accessToken) throws IOException, InterruptedException {
         String callback = "https://grim-garnet-benji1012-c136b1f8.koyeb.app/twitch/webhook";
         String secret = "eg111oi7qtrwnkbvzxmaizgl9l01fq";
-
+        System.out.println("we are in the subsribe function");
         String body = """
             {
               "type": "channel.channel_points_custom_reward_redemption.add",
@@ -207,7 +207,8 @@ public class UserConfigController {
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build();
-
+        
+    	System.out.println("requesgt: "+ request.toString());
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
         return ResponseEntity.ok(response.body());
     }

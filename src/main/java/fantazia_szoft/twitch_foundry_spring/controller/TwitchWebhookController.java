@@ -32,7 +32,7 @@ public class TwitchWebhookController {
 
             if ("notification".equalsIgnoreCase(messageType)) {
                 Map<String, Object> event = (Map<String, Object>) payload.get("event");
-
+                System.out.println("ezt kapom: "+ payload.toString());
                 String userId = (String) event.get("user_id");
                 String userName = (String) event.get("user_name");
                 String channelId = (String) event.get("broadcaster_user_id");
