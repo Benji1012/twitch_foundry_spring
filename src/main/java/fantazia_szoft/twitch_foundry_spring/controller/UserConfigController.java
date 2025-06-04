@@ -210,6 +210,7 @@ public class UserConfigController {
         
     	System.out.println("requesgt: "+ request.toString());
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("requesgt: "+ response.body());
         return ResponseEntity.ok(response.body());
     }
 
