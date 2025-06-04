@@ -74,7 +74,7 @@ public class UserConfigController {
         repository.save(config);
         
         try {
-            subscribe(config.getTwitchuserId(), config.getTwitchToken()); // <-- this line is critical
+            subscribe(config.getTwitchuserId()); // <-- this line is critical
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to subscribe: " + e.getMessage());
@@ -180,11 +180,71 @@ public class UserConfigController {
             }
     }
     
+//    @PostMapping("/subscribe")
+//    public ResponseEntity<String> subscribe(@RequestParam String userId, @RequestParam String accessToken) throws IOException, InterruptedException {
+//        String callback = "https://grim-garnet-benji1012-c136b1f8.koyeb.app/twitch/webhook";
+//        String secret = "eg111oi7qtrwnkbvzxmaizgl9l01fq";
+//        System.out.println("we are in the subsribe function");
+//        String body = """
+//            {
+//              "type": "channel.channel_points_custom_reward_redemption.add",
+//              "version": "1",
+//              "condition": {
+//                "broadcaster_user_id": "%s"
+//              },
+//              "transport": {
+//                "method": "webhook",
+//                "callback": "%s",
+//                "secret": "%s"
+//              }
+//            }
+//            """.formatted(userId, callback, secret);
+//
+//        HttpRequest request = HttpRequest.newBuilder()
+//            .uri(URI.create("https://api.twitch.tv/helix/eventsub/subscriptions"))
+//            .header("Client-Id", "d32fh16qw5qfk2giw6if0eg5tal34t")
+//            .header("Authorization", "Bearer " + accessToken)
+//            .header("Content-Type", "application/json")
+//            .POST(HttpRequest.BodyPublishers.ofString(body))
+//            .build();
+//        
+//    	System.out.println("requesgt: "+ request.toString());
+//        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+//        System.out.println("requesgt: "+ response.body());
+//        return ResponseEntity.ok(response.body());
+//    }
+    
     @PostMapping("/subscribe")
-    public ResponseEntity<String> subscribe(@RequestParam String userId, @RequestParam String accessToken) throws IOException, InterruptedException {
+    public ResponseEntity<String> subscribe(@RequestParam String userId) throws IOException, InterruptedException {
+        System.out.println("🔔 Starting EventSub subscription...");
+
+        String clientId = "d32fh16qw5qfk2giw6if0eg5tal34t";
+        String clientSecret = "eg111oi7qtrwnkbvzxmaizgl9l01fq";
+
+        // 1. Get app access token
+        HttpRequest tokenRequest = HttpRequest.newBuilder()
+            .uri(URI.create("https://id.twitch.tv/oauth2/token" +
+                    "?client_id=" + clientId +
+                    "&client_secret=" + clientSecret +
+                    "&grant_type=client_credentials"))
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .build();
+
+        HttpResponse<String> tokenResponse = HttpClient.newHttpClient()
+            .send(tokenRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (tokenResponse.statusCode() != 200) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("❌ Failed to get app access token: " + tokenResponse.body());
+        }
+
+        String appAccessToken = new JSONObject(tokenResponse.body()).getString("access_token");
+
+        // 2. Prepare EventSub subscription body
         String callback = "https://grim-garnet-benji1012-c136b1f8.koyeb.app/twitch/webhook";
         String secret = "eg111oi7qtrwnkbvzxmaizgl9l01fq";
-        System.out.println("we are in the subsribe function");
+
         String body = """
             {
               "type": "channel.channel_points_custom_reward_redemption.add",
@@ -200,19 +260,22 @@ public class UserConfigController {
             }
             """.formatted(userId, callback, secret);
 
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest subscribeRequest = HttpRequest.newBuilder()
             .uri(URI.create("https://api.twitch.tv/helix/eventsub/subscriptions"))
-            .header("Client-Id", "d32fh16qw5qfk2giw6if0eg5tal34t")
-            .header("Authorization", "Bearer " + accessToken)
+            .header("Client-Id", clientId)
+            .header("Authorization", "Bearer " + appAccessToken)
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build();
-        
-    	System.out.println("requesgt: "+ request.toString());
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println("requesgt: "+ response.body());
-        return ResponseEntity.ok(response.body());
+
+        HttpResponse<String> subscribeResponse = HttpClient.newHttpClient()
+            .send(subscribeRequest, HttpResponse.BodyHandlers.ofString());
+
+        System.out.println("📬 Subscribe response: " + subscribeResponse.body());
+
+        return ResponseEntity.ok(subscribeResponse.body());
     }
+
 
     
 //    @PostMapping("/roll")
