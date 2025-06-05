@@ -32,19 +32,23 @@ public class TwitchWebhookController {
 
             if ("notification".equalsIgnoreCase(messageType)) {
                 Map<String, Object> event = (Map<String, Object>) payload.get("event");
+                Map<String, Object> reward = (Map<String, Object>) event.get("reward");
                 System.out.println("ezt kapom: "+ payload.toString());
                 String userId = (String) event.get("user_id");
                 String userName = (String) event.get("user_name");
                 String channelId = (String) event.get("broadcaster_user_id");
+                String rewardTitle = (String) reward.get("title");
 
                 System.out.println("🔔 Redemption received: " + userName + " in channel " + channelId);
 
-                Redemptions redemption = new Redemptions();
-                redemption.setUserId(userId);
-                redemption.setUserName(userName);
-                redemption.setChanelId(channelId);
-
-                redemptionsRepository.save(redemption);
+                if (reward != null && rewardTitle != null && "Inspiráció!".equalsIgnoreCase(rewardTitle)) {
+	                Redemptions redemption = new Redemptions();
+	                redemption.setUserId(userId);
+	                redemption.setUserName(userName);
+	                redemption.setChanelId(channelId);
+	
+	                redemptionsRepository.save(redemption);
+                }
 
                 return ResponseEntity.ok("Redemption saved");
             }
