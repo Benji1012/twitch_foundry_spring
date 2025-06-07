@@ -35,6 +35,7 @@ public class TwitchService {
     
     public String getTwitchopaque_user_idFromToken(String token) {
         DecodedJWT jwt = JWT.decode(token);
+        printTokenClaims(token);
         return jwt.getClaim("opaque_user_id").asString(); // or use "preferred_username" if available
     }
 
