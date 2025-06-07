@@ -354,7 +354,13 @@ public class UserConfigController {
 
             // Try to extract real user ID
             String twitchUserId = twitchService.getTwitchUserIdFromToken(token);
+            String twitchChannel = twitchService.getTwitchChannelFromToken(token);
             if (twitchUserId == null || twitchUserId.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("IDENTITY_NOT_SHARED");
+            }
+            
+            if (twitchChannel == null || twitchChannel.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("IDENTITY_NOT_SHARED");
             }
@@ -362,20 +368,34 @@ public class UserConfigController {
             twitchUserId = twitchUserId.trim();
 
             // 🔍 1. Check if redemption exists for this user
-            Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserId(twitchUserId);
-            if (redemptionOpt.isEmpty()) {
+//            Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserIdAndChannelId(twitchUserId, twitchChannel);
+//            if (redemptionOpt.isEmpty()) {
+//                System.out.println("❌ No redemption found for userId: " + twitchUserId);
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                    .body("You must redeem the dice roll reward on Twitch before rolling.");
+//            }
+            List<Redemptions> redemptions = redemptionsRepository.findByUserIdAndChannelId(twitchUserId, twitchChannel);
+
+            if (redemptions.isEmpty()) {
                 System.out.println("❌ No redemption found for userId: " + twitchUserId);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("You must redeem the dice roll reward on Twitch before rolling.");
             }
-
-            // ✅ 2. Use redemption data
-            Redemptions redemption = redemptionOpt.get();
+            
+         // Use the first redemption only
+            Redemptions redemption = redemptions.get(0);
             String userName = redemption.getUserName() != null ? redemption.getUserName() : "Twitch viewer";
-            String twitchChannel = redemption.getChannelId().trim();
 
-            // 🧹 Delete used redemption
+            // Delete only the redemption we use (one row)
             redemptionsRepository.deleteById(redemption.getId());
+
+//            // ✅ 2. Use redemption data
+//            Redemptions redemption = redemptionOpt.get();
+//            String userName = redemption.getUserName() != null ? redemption.getUserName() : "Twitch viewer";
+////            String twitchChannel = redemption.getChannelId().trim();
+//
+//            // 🧹 Delete used redemption
+//            redemptionsRepository.deleteById(redemption.getId());
 
             // 🔧 3. Load Foundry config
             Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
