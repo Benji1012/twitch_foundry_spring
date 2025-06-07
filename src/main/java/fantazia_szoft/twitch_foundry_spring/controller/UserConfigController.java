@@ -421,7 +421,7 @@ public class UserConfigController {
     public void redirectToTwitch2(HttpServletResponse response) throws IOException {
         String clientId = "zed4vietrc5tn65xtn8eg5y01hr14k";
         String redirectUri = "https://grim-garnet-benji1012-c136b1f8.koyeb.app/api/callback2";
-        String scope = "openid,user:read:email";
+        String scope = "openid user:read:email";
         String url = "https://id.twitch.tv/oauth2/authorize?client_id=" + clientId +
                      "&redirect_uri=" + redirectUri +
                      "&response_type=code&scope=" + scope;
