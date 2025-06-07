@@ -12,6 +12,6 @@ import java.util.Optional;
 @Repository
 public interface RedemptionsRepository extends JpaRepository<Redemptions, Long> {
 
-	  Optional<Redemptions> findByUserIdAndChanelId(String userId, String chanelId);
+	  Optional<Redemptions> findByUserIdAndChannelId(String userId, String channelId);
 
 }

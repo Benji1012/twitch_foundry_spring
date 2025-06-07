@@ -332,10 +332,13 @@ public class UserConfigController {
             String token = authHeader.replace("Bearer ", "");
             String twitchUserId = twitchService.getTwitchUserIdFromToken(token);
             String twitchChannel = twitchService.getTwitchChannelFromToken(token);
+            twitchUserId = twitchUserId.trim();
+            twitchChannel = twitchChannel.trim();
 
             // 🔍 1. Check if redemption exists
-            Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserIdAndChanelId(twitchUserId, twitchChannel);
+            Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserIdAndChannelId(twitchUserId, twitchChannel);
             if (redemptionOpt.isEmpty()) {
+            	 System.out.println("Redemption NOT found for userId: " + twitchUserId + " and channelId: " + twitchChannel);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                      .body("No redemption found. Please redeem the roll reward first.");
             }

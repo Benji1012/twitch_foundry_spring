@@ -10,7 +10,7 @@ public class Redemptions {
     private Long id;
 
     private String userId;
-    private String chanelId;
+    private String channelId;
    private String userName;
    
     
@@ -31,11 +31,11 @@ public class Redemptions {
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-	public String getChanelId() {
-		return chanelId;
+	public String getChannelId() {
+		return channelId;
 	}
-	public void setChanelId(String chanelId) {
-		this.chanelId = chanelId;
+	public void setChannelId(String channelId) {
+		this.channelId = channelId;
 	}
 	public String getUserName() {
 		return userName;
@@ -45,7 +45,7 @@ public class Redemptions {
 	}
 	@Override
 	public String toString() {
-		return "Redemptions [id=" + id + ", userId=" + userId + ", chanelId=" + chanelId + ", userName=" + userName
+		return "Redemptions [id=" + id + ", userId=" + userId + ", channelId=" + channelId + ", userName=" + userName
 				+ "]";
 	}
 	

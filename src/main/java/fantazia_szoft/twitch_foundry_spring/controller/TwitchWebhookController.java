@@ -38,6 +38,9 @@ public class TwitchWebhookController {
                 String userName = (String) event.get("user_name");
                 String channelId = (String) event.get("broadcaster_user_id");
                 String rewardTitle = (String) reward.get("title");
+                
+                channelId = channelId.trim();
+                userId = userId.trim();
 
                 System.out.println("🔔 Redemption received: " + userName + " in channel " + channelId);
 
@@ -45,7 +48,7 @@ public class TwitchWebhookController {
 	                Redemptions redemption = new Redemptions();
 	                redemption.setUserId(userId);
 	                redemption.setUserName(userName);
-	                redemption.setChanelId(channelId);
+	                redemption.setChannelId(channelId);
 	
 	                redemptionsRepository.save(redemption);
                 }

@@ -1,9 +1,11 @@
 package fantazia_szoft.twitch_foundry_spring.controller;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -71,6 +73,12 @@ public class FoundryApiClientController {
     }
     
     public String getPlayerIdByName(String playerName) {
+    	
+
+		String encodedName = URLEncoder.encode(playerName, StandardCharsets.UTF_8);
+//		String encodedFilter = URLEncoder.encode("name:" + playerName + ",documentType:actor", StandardCharsets.UTF_8);
+
+    	
     	 HttpRequest request = HttpRequest.newBuilder()
     	            .uri(URI.create(baseUrl + "/search?clientId=" + clientId+"&query="+playerName+"&filter=name:"+playerName+",documentType:actor"))
     	            .header("x-api-key", apiKey)
