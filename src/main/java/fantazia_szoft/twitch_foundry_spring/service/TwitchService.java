@@ -29,7 +29,7 @@ public class TwitchService {
     
     public String getTwitchUserIdFromToken(String token) {
         DecodedJWT jwt = JWT.decode(token);
-        return jwt.getClaim("user_id").asString(); // or use "preferred_username" if available
+        return jwt.getClaim("opaque_user_id").asString(); // or use "preferred_username" if available
     }
 
     public String getTwitchChannelFromToken(String token) {

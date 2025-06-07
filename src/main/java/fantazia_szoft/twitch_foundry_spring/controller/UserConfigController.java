@@ -333,9 +333,10 @@ public class UserConfigController {
             System.out.println("🔐 Token received: " + token);
             String twitchUserId = twitchService.getTwitchUserIdFromToken(token);
             String twitchChannel = "";
-            twitchUserId = twitchUserId.trim();
-            twitchChannel = twitchChannel.trim();
-
+            if(twitchUserId != null) {
+            	 twitchUserId = twitchUserId.trim();
+            }
+           
             // 🔍 1. Check if redemption exists
             Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserId(twitchUserId);
             if (redemptionOpt.isEmpty()) {
