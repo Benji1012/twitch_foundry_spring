@@ -330,22 +330,23 @@ public class UserConfigController {
     public ResponseEntity<?> rollDice(@RequestHeader("Authorization") String authHeader, @RequestBody RollDTO dto) {
         try {
             String token = authHeader.replace("Bearer ", "");
+            System.out.println("🔐 Token received: " + token);
             String twitchUserId = twitchService.getTwitchUserIdFromToken(token);
-            String twitchChannel = twitchService.getTwitchChannelFromToken(token);
+            String twitchChannel = "";
             twitchUserId = twitchUserId.trim();
             twitchChannel = twitchChannel.trim();
 
             // 🔍 1. Check if redemption exists
-            Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserIdAndChannelId(twitchUserId, twitchChannel);
+            Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserId(twitchUserId);
             if (redemptionOpt.isEmpty()) {
-            	 System.out.println("Redemption NOT found for userId: " + twitchUserId + " and channelId: " + twitchChannel);
+            	 System.out.println("Redemption NOT found for userId: " + twitchUserId );
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                      .body("No redemption found. Please redeem the roll reward first.");
             }
 
             Redemptions redemption = redemptionOpt.get();
             String userName = redemption.getUserName() != null ? redemption.getUserName() : "Twitch viewer";
-
+            twitchChannel = redemption.getChannelId();
             // 🧹 2. Delete the used redemption
             redemptionsRepository.deleteById(redemption.getId());
 

@@ -76,11 +76,12 @@ public class FoundryApiClientController {
     	
 
 		String encodedName = URLEncoder.encode(playerName, StandardCharsets.UTF_8);
-//		String encodedFilter = URLEncoder.encode("name:" + playerName + ",documentType:actor", StandardCharsets.UTF_8);
+		String encodedFilter = URLEncoder.encode("name:" + playerName + ",documentType:actor", StandardCharsets.UTF_8);
 
     	
     	 HttpRequest request = HttpRequest.newBuilder()
-    	            .uri(URI.create(baseUrl + "/search?clientId=" + clientId+"&query="+playerName+"&filter=name:"+playerName+",documentType:actor"))
+//    	            .uri(URI.create(baseUrl + "/search?clientId=" + clientId+"&query="+playerName+"&filter=name:"+playerName+",documentType:actor"))
+    	            .uri(URI.create(baseUrl + "/search?clientId=" + clientId+"&query="+encodedName+"&filter="+encodedFilter))
     	            .header("x-api-key", apiKey)
     	            .header("Content-Type", "application/json")
     	            .GET()
