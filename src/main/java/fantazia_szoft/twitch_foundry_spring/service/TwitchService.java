@@ -33,12 +33,6 @@ public class TwitchService {
         return jwt.getClaim("user_id").asString(); // or use "preferred_username" if available
     }
     
-    public String getTwitchopaque_user_idFromToken(String token) {
-        DecodedJWT jwt = JWT.decode(token);
-        printTokenClaims(token);
-        return jwt.getClaim("opaque_user_id").asString(); // or use "preferred_username" if available
-    }
-
     public String getTwitchChannelFromToken(String token) {
         DecodedJWT jwt = JWT.decode(token);
         return jwt.getClaim("channel_id").asString(); // or "channel_name" depending on Twitch config

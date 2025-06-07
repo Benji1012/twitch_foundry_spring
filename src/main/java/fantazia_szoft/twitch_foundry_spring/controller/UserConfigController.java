@@ -279,88 +279,114 @@ public class UserConfigController {
 
     
 //    @PostMapping("/roll")
-//    public ResponseEntity<?> rollDice( @RequestHeader("Authorization") String authHeader,  @RequestBody RollDTO dto) {
+//    public ResponseEntity<?> rollDice(@RequestHeader("Authorization") String authHeader, @RequestBody RollDTO dto) {
 //        try {
-//        	System.out.println("/roll is called. rolldto: "+dto.getFormula().toString());
-//        	 String token = authHeader.replace("Bearer ", "");
-//             // Extract channel from JWT token
-//        	 String twitchChannel = twitchService.getTwitchChannelFromToken(token);
-//
-//             // Find config for that channel
-//             Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
-//             if (configOpt.isEmpty()) {
-//                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                                      .body("No config found for this Twitch channel.");
-//             }
-//             
-//             UserConfig config = configOpt.get();
-//        	
-//                 JSONObject payload = new JSONObject();
-//                 payload.put("formula", dto.getFormula());
-//                 payload.put("flavor", "Twitch viewer");
-//                 payload.put("target", "");
-//                 payload.put("speaker", "");
-//                 payload.put("itemUuid", "");
-//                 payload.put("createChatMessage", true);
-//                 payload.put("whisper", new org.json.JSONArray());
-//                 
-//               System.out.println("json: "+payload);
-//
-//                HttpRequest request = HttpRequest.newBuilder()
-//                    .uri(URI.create("https://foundryvtt-rest-api-relay.fly.dev" + "/roll?clientId=" + client_id))
-//                    .header("x-api-key", config.getFoundryApiKey())
-//                    .header("Content-Type", "application/json")
-//                    .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
-//                    .build();
-//
-//                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-//                System.out.println("Dice roll result: " + response.body());
-//           
-//
-//                return ResponseEntity.ok("Rolled the dice");
-//
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                                     .body("Error fetching player stats: " + e.getMessage());
+//            String token = authHeader.replace("Bearer ", "");
+//            System.out.println("🔐 Token received: " + token);
+//            String twitchUserId = twitchService.getTwitchopaque_user_idFromToken(token);
+//            String twitchChannel = "";
+//            if(twitchUserId != null) {
+//            	 twitchUserId = twitchUserId.trim();
 //            }
+//           
+//            // 🔍 1. Check if redemption exists
+//            Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserId(twitchUserId);
+//            if (redemptionOpt.isEmpty()) {
+//            	 System.out.println("Redemption NOT found for userId: " + twitchUserId );
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                                     .body("No redemption found. Please redeem the roll reward first.");
+//            }
+//
+//            Redemptions redemption = redemptionOpt.get();
+//            String userName = redemption.getUserName() != null ? redemption.getUserName() : "Twitch viewer";
+//            twitchChannel = redemption.getChannelId();
+//            // 🧹 2. Delete the used redemption
+//            redemptionsRepository.deleteById(redemption.getId());
+//
+//            // 🧠 3. Fetch Foundry config
+//            Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
+//            if (configOpt.isEmpty()) {
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                                     .body("No config found for this Twitch channel.");
+//            }
+//
+//            UserConfig config = configOpt.get();
+//
+//            // 🧪 4. Build payload
+//            JSONObject payload = new JSONObject();
+//            payload.put("formula", dto.getFormula());
+//            payload.put("flavor", userName);
+//            payload.put("target", "");
+//            payload.put("speaker", "");
+//            payload.put("itemUuid", "");
+//            payload.put("createChatMessage", true);
+//            payload.put("whisper", new org.json.JSONArray());
+//
+//            System.out.println("Sending dice roll payload for user: " + userName + " | Formula: " + dto.getFormula());
+//
+//            // 📡 5. Send the request
+//            HttpRequest request = HttpRequest.newBuilder()
+//                .uri(URI.create("https://foundryvtt-rest-api-relay.fly.dev/roll?clientId=" + client_id))
+//                .header("x-api-key", config.getFoundryApiKey())
+//                .header("Content-Type", "application/json")
+//                .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+//                .build();
+//
+//            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+//
+//            System.out.println("Foundry Response: " + response.body());
+//
+//            return ResponseEntity.ok("Rolled the dice");
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                                 .body("Error during dice roll: " + e.getMessage());
+//        }
 //    }
+
     
     @PostMapping("/roll")
     public ResponseEntity<?> rollDice(@RequestHeader("Authorization") String authHeader, @RequestBody RollDTO dto) {
         try {
             String token = authHeader.replace("Bearer ", "");
             System.out.println("🔐 Token received: " + token);
-            String twitchUserId = twitchService.getTwitchopaque_user_idFromToken(token);
-            String twitchChannel = "";
-            if(twitchUserId != null) {
-            	 twitchUserId = twitchUserId.trim();
+
+            // Try to extract real user ID
+            String twitchUserId = twitchService.getTwitchUserIdFromToken(token);
+            if (twitchUserId == null || twitchUserId.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("IDENTITY_NOT_SHARED");
             }
-           
-            // 🔍 1. Check if redemption exists
+
+            twitchUserId = twitchUserId.trim();
+
+            // 🔍 1. Check if redemption exists for this user
             Optional<Redemptions> redemptionOpt = redemptionsRepository.findByUserId(twitchUserId);
             if (redemptionOpt.isEmpty()) {
-            	 System.out.println("Redemption NOT found for userId: " + twitchUserId );
+                System.out.println("❌ No redemption found for userId: " + twitchUserId);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                     .body("No redemption found. Please redeem the roll reward first.");
+                    .body("You must redeem the dice roll reward on Twitch before rolling.");
             }
 
+            // ✅ 2. Use redemption data
             Redemptions redemption = redemptionOpt.get();
             String userName = redemption.getUserName() != null ? redemption.getUserName() : "Twitch viewer";
-            twitchChannel = redemption.getChannelId();
-            // 🧹 2. Delete the used redemption
+            String twitchChannel = redemption.getChannelId().trim();
+
+            // 🧹 Delete used redemption
             redemptionsRepository.deleteById(redemption.getId());
 
-            // 🧠 3. Fetch Foundry config
+            // 🔧 3. Load Foundry config
             Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
             if (configOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                     .body("No config found for this Twitch channel.");
+                    .body("No Foundry config found for this Twitch channel.");
             }
 
             UserConfig config = configOpt.get();
 
-            // 🧪 4. Build payload
+            // 🎲 4. Build and send roll payload
             JSONObject payload = new JSONObject();
             payload.put("formula", dto.getFormula());
             payload.put("flavor", userName);
@@ -370,9 +396,8 @@ public class UserConfigController {
             payload.put("createChatMessage", true);
             payload.put("whisper", new org.json.JSONArray());
 
-            System.out.println("Sending dice roll payload for user: " + userName + " | Formula: " + dto.getFormula());
+            System.out.println("🎲 Rolling dice for: " + userName + " | Formula: " + dto.getFormula());
 
-            // 📡 5. Send the request
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://foundryvtt-rest-api-relay.fly.dev/roll?clientId=" + client_id))
                 .header("x-api-key", config.getFoundryApiKey())
@@ -382,14 +407,13 @@ public class UserConfigController {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            System.out.println("Foundry Response: " + response.body());
-
-            return ResponseEntity.ok("Rolled the dice");
+            System.out.println("📩 Foundry response: " + response.body());
+            return ResponseEntity.ok("✅ Dice rolled successfully");
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body("Error during dice roll: " + e.getMessage());
+                .body("❌ Error during dice roll: " + e.getMessage());
         }
     }
 
