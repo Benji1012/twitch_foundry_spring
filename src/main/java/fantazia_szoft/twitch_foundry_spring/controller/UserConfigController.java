@@ -416,6 +416,44 @@ public class UserConfigController {
                 .body("❌ Error during dice roll: " + e.getMessage());
         }
     }
+    
+    @GetMapping("/login2")
+    public void redirectToTwitch2(HttpServletResponse response) throws IOException {
+        String clientId = "zed4vietrc5tn65xtn8eg5y01hr14k";
+        String redirectUri = "https://grim-garnet-benji1012-c136b1f8.koyeb.app/api/callback2";
+        String scope = "openid,user:read:email";
+        String url = "https://id.twitch.tv/oauth2/authorize?client_id=" + clientId +
+                     "&redirect_uri=" + redirectUri +
+                     "&response_type=code&scope=" + scope;
+        response.sendRedirect(url);
+    }
+    
+    @GetMapping("/callback2")
+    public ResponseEntity<String> giveAccessToUserId(@RequestParam String code) throws IOException, InterruptedException {
+        HttpClient httpClient = HttpClient.newHttpClient();
+        String clientId = "zed4vietrc5tn65xtn8eg5y01hr14k";
+        String clientSecret = "eg111oi7qtrwnkbvzxmaizgl9l01fq";
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("https://id.twitch.tv/oauth2/token" +
+                    "?client_id=" + clientId +
+                    "&client_secret=" + clientSecret +
+                    "&code=" + code +
+                    "&grant_type=authorization_code" +
+                    "&redirect_uri=https://grim-garnet-benji1012-c136b1f8.koyeb.app/api/callback2"))
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        
+     // Parse the JSON response
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        JsonNode jsonNode = objectMapper.readTree(response.body());
+//        String accessToken = jsonNode.get("access_token").asText();
+
+        return ResponseEntity.ok("");
+    }
 
 
 
