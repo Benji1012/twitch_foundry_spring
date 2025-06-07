@@ -331,7 +331,7 @@ public class UserConfigController {
         try {
             String token = authHeader.replace("Bearer ", "");
             System.out.println("🔐 Token received: " + token);
-            String twitchUserId = twitchService.getTwitchUserIdFromToken(token);
+            String twitchUserId = twitchService.getTwitchopaque_user_idFromToken(token);
             String twitchChannel = "";
             if(twitchUserId != null) {
             	 twitchUserId = twitchUserId.trim();

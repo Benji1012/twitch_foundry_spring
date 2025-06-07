@@ -175,10 +175,10 @@ public class Player {
 							}
 
 							// Output equipped items
-							System.out.println("Equipped Items:");
-							for (String item : equippedItems) {
-							    System.out.println("- " + item);
-							}
+//							System.out.println("Equipped Items:");
+//							for (String item : equippedItems) {
+//							    System.out.println("- " + item);
+//							}
 
 							// Optional: Show matched race/class item names
 							if (raceItem != null) {

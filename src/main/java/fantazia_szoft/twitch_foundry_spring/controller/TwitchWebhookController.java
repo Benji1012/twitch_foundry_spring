@@ -23,7 +23,7 @@ public class TwitchWebhookController {
             @RequestHeader(value = "Twitch-Eventsub-Message-Type", required = false) String messageType
     ) {
         try {
-        	System.out.println("messageType: "+ messageType);
+//        	System.out.println("messageType: "+ messageType);
             // ✅ Handle webhook verification
             if ("webhook_callback_verification".equalsIgnoreCase(messageType)) {
                 String challenge = (String) payload.get("challenge");
