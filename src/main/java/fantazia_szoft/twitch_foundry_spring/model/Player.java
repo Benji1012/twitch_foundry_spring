@@ -116,7 +116,7 @@ public class Player {
 						    String ability = skillObj.getString("ability");
 						    double profLevel = skillObj.getDouble("value");  // 0, 0.5, 1.0, or 2.0
 						    int baseMod = (int) Math.floor((abilityMap.getOrDefault(ability, 10) - 10) / 2.0);
-						    int skillValue = (int) Math.floor(baseMod + (profLevel * proficiency));
+						    int skillValue = (int) Math.round(baseMod + (profLevel * proficiency));
 
 						    switch (skillName) {
 						        case "acr": acrobatics = skillValue; break;
