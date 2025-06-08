@@ -117,6 +117,14 @@ public class Player {
 						    double profLevel = skillObj.getDouble("value");  // 0, 0.5, 1.0, or 2.0
 						    int baseMod = (int) Math.floor((abilityMap.getOrDefault(ability, 10) - 10) / 2.0);
 						    int skillValue = (int) Math.round(baseMod + (profLevel * proficiency));
+						    if(skillName.equals("acr")){
+						    	System.out.println("profLevel: "+profLevel);
+						    	System.out.println("abilityMap: "+abilityMap.getOrDefault(ability, 10));
+						    	System.out.println("baseMod: "+baseMod);
+						    	System.out.println("proficiency: "+proficiency);
+						    	System.out.println("skillValue: "+skillValue);
+						    	System.out.println("profLevel: "+profLevel);
+						    }
 
 						    switch (skillName) {
 						        case "acr": acrobatics = skillValue; break;
