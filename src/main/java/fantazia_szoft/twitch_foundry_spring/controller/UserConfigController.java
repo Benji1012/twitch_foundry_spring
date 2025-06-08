@@ -478,7 +478,7 @@ public class UserConfigController {
     
     
     @GetMapping("/sheets")
-	    public ResponseEntity<?> getCharachterSheets(@RequestHeader("Authorization") String authHeader, @RequestBody RollDTO dto) {
+	    public ResponseEntity<?> getCharachterSheets(@RequestHeader("Authorization") String authHeader) {
 	        try {
 	            String token = authHeader.replace("Bearer ", "");
 	            System.out.println("🔐 Token received: " + token);
