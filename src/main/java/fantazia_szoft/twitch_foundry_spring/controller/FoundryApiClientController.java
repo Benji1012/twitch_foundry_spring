@@ -158,4 +158,32 @@ public class FoundryApiClientController {
      
       return ac;
   }
+
+	 public String getSheetByUUid(String playerUuid) {
+	   	 HttpRequest request = HttpRequest.newBuilder()
+	   	            .uri(URI.create(baseUrl + "/sheet?clientId=" + clientId+"&uuid="+playerUuid))
+	   	            .header("x-api-key", apiKey)
+	   	            .header("Content-Type", "application/json")
+	   	            .GET()
+	   	            .build();
+	   	 
+	   	 HttpResponse<String> response;
+			try {
+				response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+				 System.out.println("Search result: " + response.body());
+				 // Parse the JSON response
+			       
+			       
+		            return response.body(); 
+			        
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return null;
+	       
+	   }
 }

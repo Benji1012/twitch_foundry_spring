@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fantazia_szoft.twitch_foundry_spring.dto.PlayerStatDTO;
 import fantazia_szoft.twitch_foundry_spring.dto.RollDTO;
+import fantazia_szoft.twitch_foundry_spring.dto.SheethtmlDTO;
 import fantazia_szoft.twitch_foundry_spring.dto.UserConfigDTO;
 import fantazia_szoft.twitch_foundry_spring.model.Player;
 import fantazia_szoft.twitch_foundry_spring.model.Redemptions;
@@ -474,6 +475,60 @@ public class UserConfigController {
 
         return ResponseEntity.ok("");
     }
+    
+    
+    @GetMapping("/sheets")
+	    public ResponseEntity<?> getCharachterSheets(@RequestHeader("Authorization") String authHeader, @RequestBody RollDTO dto) {
+	        try {
+	            String token = authHeader.replace("Bearer ", "");
+	            System.out.println("🔐 Token received: " + token);
+
+	            String twitchChannel = twitchService.getTwitchChannelFromToken(token);
+	            if (twitchChannel == null || twitchChannel.trim().isEmpty()) {
+	                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+	                    .body("IDENTITY_NOT_SHARED");
+	            }
+
+	            Optional<UserConfig> configOpt = repository.findBytwitchChannelId(twitchChannel);
+	            if (configOpt.isEmpty()) {
+	                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+	                    .body("No Foundry config found for this Twitch channel.");
+	            }
+
+	            UserConfig config = configOpt.get();
+	            
+	            FoundryApiClientController foundryClient = new FoundryApiClientController(config.getFoundryApiKey());
+
+
+	            List<String> playerNames = List.of(
+	                    config.getPlayer1Name(),
+	                    config.getPlayer2Name(),
+	                    config.getPlayer3Name(),
+	                    config.getPlayer4Name(),
+	                    config.getPlayer5Name(),
+	                    config.getPlayer6Name()
+	                );
+
+	                List<PlayerStatDTO> playerStats = new ArrayList<>();
+	                List<SheethtmlDTO> playersheets = new ArrayList();
+
+	                for (String name : playerNames) {
+	                    if (name != null && !name.isBlank()) {
+	                        Player player = new Player(name, foundryClient);
+	                        playerStats.add(new PlayerStatDTO(player));
+	                        setClient_id(player.getClient_id());
+	                        playersheets.add(new SheethtmlDTO(name, foundryClient.getSheetByUUid(player.getUuid())));}
+	                }
+
+
+	            return ResponseEntity.ok(playersheets);
+
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                .body("❌ Error during getting sheets: " + e.getMessage());
+	        }
+	    }
 
 
 
